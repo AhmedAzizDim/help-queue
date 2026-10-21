@@ -12,4 +12,14 @@ class TicketController extends Controller
 
         return view('tickets.index', ['tickets' => $tickets]);
     }
+
+    public function show(Ticket $ticket)
+    {
+        return view('tickets.show', ['ticket' => $ticket]);
+    }
+    public function create()
+{
+return view('tickets.create', ['topics' => Ticket::TOPICS]);
+}
+
 }

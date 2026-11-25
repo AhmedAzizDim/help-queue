@@ -11,6 +11,7 @@
 <strong>{{ $loop->iteration }}. {{ $ticket->name }}</strong>
 <span class="topic">{{ $ticket->topic }}</span>
 <p>{{ $ticket->description }}</p>
+<a href="{{ route('tickets.show', $ticket) }}">Details</a>
 </article>
 @empty
 <p>Nobody is waiting.</p>

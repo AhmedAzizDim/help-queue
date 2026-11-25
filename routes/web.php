@@ -1,45 +1,19 @@
 <?php
 
-namespace App\Http\Controllers;
+use App\Http\Controllers\TicketController;
+use Illuminate\Support\Facades\Route;
 
-use App\Models\Ticket;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+Route::get('/', function () {
+    return view('welcome');
+});
 
-class TicketController extends Controller
-{
-    public function index()
-    {
-        $tickets = Ticket::orderBy('created_at')->get();
-        return view('tickets.index', ['tickets' => $tickets]);
-    }
+Route::get('/hello', function () {
+    return 'Hello from Laravel!';
+});
 
-    public function show(Ticket $ticket)
-    {
-        return view('tickets.show', ['ticket' => $ticket]);
-    }
+Route::get('/hello/{name}', function (string $name) {
+    return view('hello', ['name' => $name]);
+});
 
-    public function create()
-    {
-        return view('tickets.create', ['topics' => Ticket::TOPICS]);
-    }
-
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:50'],
-            'topic' => ['required', Rule::in(Ticket::TOPICS)],
-            'description' => ['nullable', 'string', 'max:500'],
-        ]);
-
-        Ticket::create($validated);
-
-        return redirect()->route('tickets.index')->with('message', 'You are in the queue!');
-    }
-
-    public function destroy(Ticket $ticket)
-    {
-        $ticket->delete();
-        return redirect()->route('tickets.index')->with('message', 'Ticket removed.');
-    }
-}
+Route::resource('tickets', TicketController::class)
+    ->only(['index', 'create', 'store', 'show', 'update', 'destroy']);

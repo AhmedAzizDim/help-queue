@@ -9,6 +9,9 @@
         <p>{{ $ticket->description }}</p>
         <p>Status: <strong>{{ $ticket->status }}</strong></p>
         <p>Asked {{ $ticket->created_at->diffForHumans() }}</p>
+        @if ($ticket->status === 'waiting')
+            <p><strong>{{ $ahead }}</strong> {{ $ahead === 1 ? 'person' : 'people' }} ahead of you.</p>
+        @endif
     </article>
 
     @error('status')

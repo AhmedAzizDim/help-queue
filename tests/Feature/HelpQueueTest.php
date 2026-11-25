@@ -150,3 +150,51 @@ test('finishing help removes the ticket card and increases the solved count', fu
         ->assertSee('1 solved so far.')
         ->assertDontSee('Finished ticket');
 });
+
+test('a waiting ticket displays how many people are ahead with the correct wording', function (int $count, string $noun) {
+    Ticket::factory()->count($count)->create();
+    $ticket = Ticket::factory()->create();
+    Ticket::factory()->create();
+
+    $this->get(route('tickets.show', $ticket))->assertOk()
+        ->assertViewHas('ahead', $count)
+        ->assertSee("<strong>{$count}</strong> {$noun} ahead of you.", false);
+})->with([
+    'first in line' => [0, 'people'],
+    'one person ahead' => [1, 'person'],
+    'several people ahead' => [2, 'people'],
+]);
+
+test('queue position counts only waiting tickets with smaller ids regardless of timestamps', function () {
+    $this->freezeTime();
+    Ticket::factory()->create(['created_at' => now()->addMinute()]);
+    Ticket::factory()->create(['status' => 'helping']);
+    Ticket::factory()->create(['status' => 'done']);
+    $ticket = Ticket::factory()->create();
+    Ticket::factory()->create(['created_at' => now()->subMinute()]);
+
+    $this->get(route('tickets.show', $ticket))->assertOk()
+        ->assertViewHas('ahead', 1)
+        ->assertSee('<strong>1</strong> person ahead of you.', false);
+});
+
+test('queue position is hidden when a ticket is no longer waiting', function (string $status) {
+    Ticket::factory()->create();
+    $ticket = Ticket::factory()->create(['status' => $status]);
+
+    $this->get(route('tickets.show', $ticket))->assertOk()
+        ->assertDontSee('ahead of you.');
+})->with(['helping', 'done']);
+
+test('queue position decreases when an earlier ticket starts being helped', function () {
+    $ahead = Ticket::factory()->create();
+    $ticket = Ticket::factory()->create();
+    $this->get(route('tickets.show', $ticket))->assertViewHas('ahead', 1);
+
+    $this->patch(route('tickets.update', $ahead), ['status' => 'helping'])
+        ->assertRedirect(route('tickets.show', $ahead));
+
+    $this->get(route('tickets.show', $ticket))->assertOk()
+        ->assertViewHas('ahead', 0)
+        ->assertSee('<strong>0</strong> people ahead of you.', false);
+});

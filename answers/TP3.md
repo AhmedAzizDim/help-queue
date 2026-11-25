@@ -38,3 +38,24 @@ The `helping()` scope similarly filters tickets whose status is `helping`.
 For step 2.5, Hudson was changed from `waiting` to `helping` through the form.
 The queue then showed Hudson under **Being helped**, **Waiting (7)**, and
 **1 solved so far.** Litzy, completed in Exercise 1, no longer appeared as a card.
+
+## Exercise 3 - Question 3
+
+I created a ticket through the form using the name **Ahmed Aziz Dimassi** and
+the topic **Laravel**. Its detail page showed **7 people ahead of you.**
+
+I checked the Waiting section: it contained eight tickets, with my ticket in
+position 8. The seven tickets before it were Dewayne, Lizzie, Alvina, Sven,
+Tess, Odell, and AZ. Hudson was being helped and Litzy was done, so neither
+was counted as waiting ahead of me.
+
+The controller calculates the number with:
+
+```php
+$ahead = Ticket::waiting()->where('id', '<', $ticket->id)->count();
+```
+
+Only waiting tickets with a smaller ID are counted. IDs determine queue order
+even when several tickets share the same creation timestamp. The message is
+shown only while the current ticket is waiting and uses `person` for 1 or
+`people` otherwise. The count above records the queue at the time of this check.

@@ -17,6 +17,7 @@ class TicketController extends Controller
             'helping' => Ticket::with('topic')->helping()->get(),
             'waiting' => Ticket::with('topic')->waiting()->get(),
             'doneCount' => Ticket::where('status', 'done')->count(),
+            'topics' => Topic::withCount('tickets')->orderBy('name')->get(),
         ]);
     }
 

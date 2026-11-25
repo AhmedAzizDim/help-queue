@@ -98,3 +98,17 @@ Since the migration permits a null topic, an unassigned ticket displays
 
 Validation, old form values, escaped output, and the earlier exercises are
 covered by the passing tests: 42 tests, 197 assertions at this checkpoint.
+
+## Exercise 6 - Question 6
+
+Clicking the **Git** badge opens `/topics/1`, which shows **2 tickets**:
+Juana and Sallie. These are the observed seeded records in the local project;
+random seeding can produce different counts in another installation.
+
+Each topic page lists only that topic's tickets, ordered by ID, including
+waiting, helping, and completed tickets. An unknown topic returns 404.
+
+For the second bonus, the queue lists every topic and its total ticket count,
+including topics with zero tickets. The controller uses
+`Topic::withCount('tickets')->orderBy('name')->get()` and the view displays
+`$topic->tickets_count`.

@@ -5,7 +5,7 @@
 @section('content')
     <h1>{{ $ticket->name }}</h1>
     <article class="ticket">
-        <span class="topic">{{ $ticket->topic }}</span>
+        <span class="topic">{{ $ticket->topic?->name ?? 'Unassigned' }}</span>
         <p>{{ $ticket->description }}</p>
         <p>Status: <strong>{{ $ticket->status }}</strong></p>
         <p>Asked {{ $ticket->created_at->diffForHumans() }}</p>

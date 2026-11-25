@@ -81,3 +81,20 @@ At this checkpoint, the ticket-creation controller still uses the removed
 `Ticket::TOPICS` constant. The creation form and validation are migrated to
 `topic_id` in Exercise 5. Consequently, 35 tests pass and the existing
 ticket-creation test fails at this intermediate checkpoint.
+
+## Exercise 5 - Question 5
+
+Submitting `topic_id=99` returns **The selected topic is invalid.** The
+`exists:topics,id` rule produces this error because topic 99 does not exist.
+The unmodified Laravel message would say **The selected topic id is invalid.**
+The bonus third validation argument, `['topic_id' => 'topic']`, changes only
+the displayed attribute name.
+
+The form now uses database IDs, offers the five topics in alphabetical order,
+preserves the selected topic after validation errors, and stores `topic_id`.
+The badges display topic names. The queue eagerly loads each ticket's topic.
+Since the migration permits a null topic, an unassigned ticket displays
+`Unassigned` instead of causing an error.
+
+Validation, old form values, escaped output, and the earlier exercises are
+covered by the passing tests: 42 tests, 197 assertions at this checkpoint.

@@ -64,9 +64,10 @@ test('ticket fields escape HTML in both views', function () {
     foreach (['/tickets', '/tickets/'.$ticket->id] as $url) {
         $this->get($url)->assertOk()
             ->assertSee($ticket->name)
-            ->assertSee($ticket->topic->toJson())
+            ->assertSee($ticket->topic->name)
             ->assertSee($ticket->description)
             ->assertDontSee('<script>', false)
+            ->assertDontSee('<b>Git</b>', false)
             ->assertDontSee('<img src=x', false);
     }
 });

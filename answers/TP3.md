@@ -112,3 +112,15 @@ For the second bonus, the queue lists every topic and its total ticket count,
 including topics with zero tickets. The controller uses
 `Topic::withCount('tickets')->orderBy('name')->get()` and the view displays
 `$topic->tickets_count`.
+
+## Exercise 7 - Question 7
+
+The live `/queue.json` response contains **8 items**, matching the eight
+waiting tickets in the local database. The items are ordered by ticket ID.
+Each nested `topic` object contains `id`, `name`, `created_at`, and `updated_at`.
+A Python script, a mobile application, or a command-line client could consume
+this JSON to display the queue.
+
+The home page redirects to `/tickets`. Automated tests verify that helping
+and completed tickets are excluded, topics are included, and an empty waiting
+queue returns `[]`. All 49 tests pass, with 255 assertions at this checkpoint.

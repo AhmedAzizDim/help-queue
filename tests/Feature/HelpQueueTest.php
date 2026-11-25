@@ -28,11 +28,15 @@ test('an empty queue uses the shared layout and empty message', function () {
     $this->get('/tickets')->assertOk()
         ->assertSee('<title>Queue</title>', false)
         ->assertSee('Help Queue')
-        ->assertSee('0 waiting')
+        ->assertSee('Being helped')
+        ->assertSee('Nobody right now.')
+        ->assertSee('Waiting (0)')
+        ->assertSee('0 solved so far.')
         ->assertSee('Nobody is waiting.');
 });
 
-test('tickets are read from the database in arrival order', function () {
+test('waiting tickets are numbered by id even when timestamps are out of order', function () {
+    $this->freezeTime();
     $later = Ticket::create(['name' => 'Sara', 'topic' => 'Setup']);
     $later->created_at = now();
     $later->save();
@@ -41,12 +45,12 @@ test('tickets are read from the database in arrival order', function () {
     $earlier->save();
 
     $this->get('/tickets')->assertOk()
-        ->assertSee('2 waiting')
-        ->assertSeeInOrder(['1. Lina', 'Git', 'My push is rejected', '2. Sara', 'Setup'])
+        ->assertSee('Waiting (2)')
+        ->assertSeeInOrder(['1. Sara', 'Setup', '2. Lina', 'Git', 'My push is rejected'])
         ->assertSee(route('tickets.show', $earlier), false);
 
     Ticket::create(['name' => 'Omar', 'topic' => 'Laravel']);
-    $this->get('/tickets')->assertOk()->assertSee('3 waiting')->assertSee('Omar');
+    $this->get('/tickets')->assertOk()->assertSee('Waiting (3)')->assertSee('Omar');
 });
 
 test('ticket fields escape HTML in both views', function () {
@@ -96,5 +100,53 @@ test('the assignment sample tickets can be seeded without duplicates', function 
     expect(Ticket::count())->toBe(3);
     $this->assertDatabaseHas('tickets', ['name' => 'Lina', 'topic' => 'Git', 'status' => 'waiting']);
     $this->assertDatabaseHas('tickets', ['name' => 'Omar', 'description' => null]);
-    $this->get('/tickets')->assertOk()->assertSee('3 waiting')->assertSeeInOrder(['1. Lina', '2. Omar', '3. Sara']);
+    $this->get('/tickets')->assertOk()->assertSee('Waiting (3)')->assertSeeInOrder(['1. Lina', '2. Omar', '3. Sara']);
+});
+
+test('the queue separates helping and waiting tickets and counts completed tickets', function () {
+    Ticket::factory()->create(['name' => 'Amina']);
+    Ticket::factory()->create(['name' => 'Bilal', 'status' => 'helping']);
+    Ticket::factory()->create(['name' => 'Completed ticket', 'status' => 'done']);
+    Ticket::factory()->create(['name' => 'Dina']);
+    Ticket::factory()->create(['name' => 'Other completed ticket', 'status' => 'done']);
+
+    $this->get('/tickets')->assertOk()
+        ->assertSeeInOrder([
+            '<h2>Being helped</h2>',
+            '<strong>Bilal</strong>',
+            '<h2>Waiting (2)</h2>',
+            '<strong>1. Amina</strong>',
+            '<strong>2. Dina</strong>',
+            '2 solved so far.',
+        ], false)
+        ->assertDontSee('Completed ticket')
+        ->assertDontSee('Other completed ticket')
+        ->assertDontSee('Nobody right now.')
+        ->assertDontSee('Nobody is waiting.');
+});
+
+test('starting help moves a ticket from the waiting list into being helped', function () {
+    $ticket = Ticket::factory()->create(['name' => 'Omar']);
+
+    $this->patch(route('tickets.update', $ticket), ['status' => 'helping'])
+        ->assertRedirect(route('tickets.show', $ticket));
+
+    $this->get('/tickets')->assertOk()
+        ->assertSeeInOrder(['Being helped', 'Omar', 'Waiting (0)', 'Nobody is waiting.', '0 solved so far.'])
+        ->assertDontSee('1. Omar')
+        ->assertDontSee('Nobody right now.');
+});
+
+test('finishing help removes the ticket card and increases the solved count', function () {
+    $ticket = Ticket::factory()->create(['name' => 'Finished ticket', 'status' => 'helping']);
+
+    $this->patch(route('tickets.update', $ticket), ['status' => 'done'])
+        ->assertRedirect(route('tickets.show', $ticket));
+
+    $this->get('/tickets')->assertOk()
+        ->assertSee('Nobody right now.')
+        ->assertSee('Waiting (0)')
+        ->assertSee('Nobody is waiting.')
+        ->assertSee('1 solved so far.')
+        ->assertDontSee('Finished ticket');
 });

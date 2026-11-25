@@ -12,9 +12,11 @@ class TicketController extends Controller
 {
     public function index(): View
     {
-        $tickets = Ticket::orderBy('created_at')->get();
-
-        return view('tickets.index', ['tickets' => $tickets]);
+        return view('tickets.index', [
+            'helping' => Ticket::helping()->get(),
+            'waiting' => Ticket::waiting()->get(),
+            'doneCount' => Ticket::where('status', 'done')->count(),
+        ]);
     }
 
     public function show(Ticket $ticket): View

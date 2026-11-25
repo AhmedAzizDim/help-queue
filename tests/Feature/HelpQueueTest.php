@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Ticket;
+use App\Models\Topic;
 use Database\Seeders\TicketSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -37,10 +38,10 @@ test('an empty queue uses the shared layout and empty message', function () {
 
 test('waiting tickets are numbered by id even when timestamps are out of order', function () {
     $this->freezeTime();
-    $later = Ticket::create(['name' => 'Sara', 'topic' => 'Setup']);
+    $later = Ticket::create(['name' => 'Sara', 'topic_id' => Topic::firstOrCreate(['name' => 'Setup'])->id]);
     $later->created_at = now();
     $later->save();
-    $earlier = Ticket::create(['name' => 'Lina', 'topic' => 'Git', 'description' => 'My push is rejected']);
+    $earlier = Ticket::create(['name' => 'Lina', 'topic_id' => Topic::firstOrCreate(['name' => 'Git'])->id, 'description' => 'My push is rejected']);
     $earlier->created_at = now()->subMinute();
     $earlier->save();
 
@@ -49,21 +50,21 @@ test('waiting tickets are numbered by id even when timestamps are out of order',
         ->assertSeeInOrder(['1. Sara', 'Setup', '2. Lina', 'Git', 'My push is rejected'])
         ->assertSee(route('tickets.show', $earlier), false);
 
-    Ticket::create(['name' => 'Omar', 'topic' => 'Laravel']);
+    Ticket::create(['name' => 'Omar', 'topic_id' => Topic::firstOrCreate(['name' => 'Laravel'])->id]);
     $this->get('/tickets')->assertOk()->assertSee('Waiting (3)')->assertSee('Omar');
 });
 
 test('ticket fields escape HTML in both views', function () {
     $ticket = Ticket::create([
         'name' => '<script>alert(1)</script>',
-        'topic' => '<b>Git</b>',
+        'topic_id' => Topic::firstOrCreate(['name' => '<b>Git</b>'])->id,
         'description' => '<img src=x onerror=alert(1)>',
     ]);
 
     foreach (['/tickets', '/tickets/'.$ticket->id] as $url) {
         $this->get($url)->assertOk()
             ->assertSee($ticket->name)
-            ->assertSee($ticket->topic)
+            ->assertSee($ticket->topic->toJson())
             ->assertSee($ticket->description)
             ->assertDontSee('<script>', false)
             ->assertDontSee('<img src=x', false);
@@ -71,16 +72,16 @@ test('ticket fields escape HTML in both views', function () {
 });
 
 test('ticket defaults and permitted fields match the assignment', function () {
-    $ticket = Ticket::create(['name' => 'Omar', 'topic' => 'Laravel'])->fresh();
+    $ticket = Ticket::create(['name' => 'Omar', 'topic_id' => Topic::firstOrCreate(['name' => 'Laravel'])->id])->fresh();
 
     expect($ticket->status)->toBe('waiting')
         ->and($ticket->description)->toBeNull()
-        ->and($ticket->getFillable())->toBe(['name', 'topic', 'description'])
+        ->and($ticket->getFillable())->toBe(['name', 'topic_id', 'description'])
         ->and($ticket->isFillable('status'))->toBeFalse();
 });
 
 test('a ticket detail shows its fields and relative arrival time', function () {
-    $ticket = Ticket::create(['name' => 'Lina', 'topic' => 'Git', 'description' => 'My push is rejected']);
+    $ticket = Ticket::create(['name' => 'Lina', 'topic_id' => Topic::firstOrCreate(['name' => 'Git'])->id, 'description' => 'My push is rejected']);
     $ticket->created_at = now()->subMinutes(5);
     $ticket->save();
 
@@ -98,7 +99,7 @@ test('the assignment sample tickets can be seeded without duplicates', function 
     $this->seed(TicketSeeder::class);
 
     expect(Ticket::count())->toBe(3);
-    $this->assertDatabaseHas('tickets', ['name' => 'Lina', 'topic' => 'Git', 'status' => 'waiting']);
+    $this->assertDatabaseHas('tickets', ['name' => 'Lina', 'topic_id' => Topic::firstOrCreate(['name' => 'Git'])->id, 'status' => 'waiting']);
     $this->assertDatabaseHas('tickets', ['name' => 'Omar', 'description' => null]);
     $this->get('/tickets')->assertOk()->assertSee('Waiting (3)')->assertSeeInOrder(['1. Lina', '2. Omar', '3. Sara']);
 });

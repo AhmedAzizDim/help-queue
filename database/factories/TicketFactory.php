@@ -15,14 +15,11 @@ class TicketFactory extends Factory
      *
      * @return array<string, mixed>
      */
-   public function definition(): array
-{
-return [
-'name' => fake()->firstName(),
-'topic' => fake()->randomElement(Ticket::TOPICS),
-'description' => fake()->sentence(),
-];
-}
-
+    public function definition(): array
+    {
+        return [
+            'name' => fake()->firstName(),
+            'description' => fake()->sentence(),
+        ];
     }
-
+}

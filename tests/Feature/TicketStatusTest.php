@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Ticket;
+use App\Models\Topic;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -63,16 +64,16 @@ test('a missing status is rejected without changing the ticket', function () {
 
 test('a status update changes only the status field', function () {
     $ticket = Ticket::factory()->create([
-        'name' => 'Lina', 'topic' => 'Git', 'description' => 'My push is rejected',
+        'name' => 'Lina', 'topic_id' => Topic::firstOrCreate(['name' => 'Git'])->id, 'description' => 'My push is rejected',
     ]);
 
     $this->patch(route('tickets.update', $ticket), [
-        'status' => 'helping', 'name' => 'Changed', 'topic' => 'Setup', 'description' => 'Changed',
+        'status' => 'helping', 'name' => 'Changed', 'topic_id' => Topic::firstOrCreate(['name' => 'Setup'])->id, 'description' => 'Changed',
     ])->assertRedirect(route('tickets.show', $ticket));
 
     $this->assertDatabaseHas('tickets', [
         'id' => $ticket->id, 'status' => 'helping',
-        'name' => 'Lina', 'topic' => 'Git', 'description' => 'My push is rejected',
+        'name' => 'Lina', 'topic_id' => Topic::firstOrCreate(['name' => 'Git'])->id, 'description' => 'My push is rejected',
     ]);
 });
 
@@ -83,11 +84,11 @@ test('a status update for a missing ticket returns 404', function () {
 
 test('new tickets start waiting even when an extra status is submitted', function () {
     $this->post(route('tickets.store'), [
-        'name' => 'Lina', 'topic' => 'Git', 'status' => 'done',
+        'name' => 'Lina', 'topic_id' => Topic::firstOrCreate(['name' => 'Git'])->id, 'status' => 'done',
     ])->assertRedirect(route('tickets.index'))
         ->assertSessionHas('message', 'You are in the queue!');
 
-    $this->assertDatabaseHas('tickets', ['name' => 'Lina', 'topic' => 'Git', 'status' => 'waiting']);
+    $this->assertDatabaseHas('tickets', ['name' => 'Lina', 'topic_id' => Topic::firstOrCreate(['name' => 'Git'])->id, 'status' => 'waiting']);
 });
 
 test('a ticket can still be removed through its separate delete form', function () {

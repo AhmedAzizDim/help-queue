@@ -1,7 +1,9 @@
 <?php
 
 namespace Database\Seeders;
+
 use App\Models\Ticket;
+use App\Models\Topic;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -9,16 +11,11 @@ class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        Ticket::factory(8)->create();// \App\Models\User::factory(10)->create();
+        $topics = collect(['Git', 'Laravel', 'Blade', 'Database', 'Setup'])
+            ->map(fn ($name) => Topic::create(['name' => $name]));
 
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+        Ticket::factory(8)->create(fn () => ['topic_id' => $topics->random()->id]);
     }
 }

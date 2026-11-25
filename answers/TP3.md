@@ -59,3 +59,25 @@ Only waiting tickets with a smaller ID are counted. IDs determine queue order
 even when several tickets share the same creation timestamp. The message is
 shown only while the current ticket is waiting and uses `person` for 1 or
 `people` otherwise. The count above records the queue at the time of this check.
+
+## Exercise 4 - Question 4
+
+The topic badges now display JSON describing the related topic, including its
+`id`, `name`, `created_at`, and `updated_at`, instead of only the topic name.
+For example, the first badge contains `"id":1` and `"name":"Git"` along with
+the topic's timestamps.
+
+The views still print `{{ $ticket->topic }}`, but `topic` is now an Eloquent
+relationship returning a `Topic` model, not a text column. When that model is
+printed, Eloquent converts it to JSON and Blade escapes it for HTML display.
+Exercise 5 will change the views to print `{{ $ticket->topic->name }}`.
+
+After `php artisan migrate:fresh --seed`, the database contains five topics
+and eight sample tickets. In Tinker, `Ticket::first()->topic->name` returned
+`Git`, confirming the relationship works. The previous local database was
+backed up before the rebuild.
+
+At this checkpoint, the ticket-creation controller still uses the removed
+`Ticket::TOPICS` constant. The creation form and validation are migrated to
+`topic_id` in Exercise 5. Consequently, 35 tests pass and the existing
+ticket-creation test fails at this intermediate checkpoint.
